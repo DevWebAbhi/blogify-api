@@ -26,8 +26,18 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
+if (!MONGO_URI) {
+  console.error('Missing MONGO_URI environment variable');
+  process.exit(1);
+}
+
+const mongooseOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
+
 mongoose
-  .connect(MONGO_URI)
+  .connect(MONGO_URI, mongooseOptions)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

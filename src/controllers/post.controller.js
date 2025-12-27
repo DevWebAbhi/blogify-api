@@ -1,4 +1,4 @@
-const Post = require('../models/post.model');
+const postsService = require('../services/posts.service');
 const ApiError = require('../utils/ApiError');
 
 const createPost = async (req, res, next) => {
@@ -9,7 +9,7 @@ const createPost = async (req, res, next) => {
       return next(new ApiError(400, 'Missing required fields'));
     }
 
-    const post = await Post.create({ title, content, author });
+    const post = await postsService.createPost({ title, content, author });
     return res.status(201).json({ success: true, data: post });
   } catch (err) {
     console.error(err);
@@ -21,13 +21,8 @@ const updatePost = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = { ...req.body };
-    delete updates.isDeleted;
 
-    const updated = await Post.findOneAndUpdate(
-      { _id: id, isDeleted: false },
-      updates,
-      { new: true, runValidators: true }
-    );
+    const updated = await postsService.updatePost(id, updates);
 
     if (!updated) {
       return next(new ApiError(404, 'Post not found'));
@@ -42,7 +37,7 @@ const updatePost = async (req, res, next) => {
 
 const getAllPosts = async (req, res, next) => {
   try {
-    const posts = await Post.find({ isDeleted: false });
+    const posts = await postsService.getAllPosts();
     return res.status(200).json({ success: true, data: posts });
   } catch (err) {
     console.error(err);
@@ -53,7 +48,7 @@ const getAllPosts = async (req, res, next) => {
 const getPostById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const post = await Post.findOne({ _id: id, isDeleted: false });
+    const post = await postsService.getPostById(id);
     if (!post) {
       return next(new ApiError(404, 'Post not found'));
     }
@@ -67,11 +62,7 @@ const getPostById = async (req, res, next) => {
 const deletePost = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updated = await Post.findOneAndUpdate(
-      { _id: id, isDeleted: false },
-      { isDeleted: true },
-      { new: true }
-    );
+    const updated = await postsService.deletePost(id);
 
     if (!updated) {
       return next(new ApiError(404, 'Post not found or already deleted'));
