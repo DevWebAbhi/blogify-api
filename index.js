@@ -1,19 +1,39 @@
 const express = require('express');
-
+const mongoose = require('mongoose');
+require('dotenv').config();
 const app = express();
+
+const cors = require('cors');
+// Enable CORS for all routes
+app.use(cors());
 
 // Middleware
 app.use(express.json());
 
 // Routes
-app.use("/api/v1/posts", require("./src/routes/posts.routes"));
+app.use('/api', require('./src/routes/post.routes'));
+app.use('/api/auth', require('./src/routes/auth.routes'));
 
 // Welcome route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to Blogify API" });
 });
 
+// Error handler (must be mounted after all routes)
+const errorHandler = require('./src/middlewares/error.middleware');
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+const MONGO_URI = process.env.MONGO_URI;
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB', err);
+    process.exit(1);
+  });
