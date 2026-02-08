@@ -6,7 +6,7 @@ const createPost = async ({ title, content, author }) => {
 };
 
 const getAllPosts = async () => {
-  return Post.find({ isDeleted: false }).populate('author', 'name email').sort({ createdAt: -1 });
+  return Post.find({ isDeleted: false }).populate('author', 'name email').sort({ createdAt: -1 }).limit(100);
 };
 
 const getPostById = async (id) => {

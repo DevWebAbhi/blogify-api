@@ -13,25 +13,21 @@ const generateToken = (payload) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return next(new ApiError(400, 'Name, email and password are required'));
+    const { name, username, email, password } = req.body;
+    if (!name || !username || !email || !password) {
+      return next(new ApiError(400, 'Name, username, email and password are required'));
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return next(new ApiError(400, 'Email already in use'));
-    }
-
-    const user = await User.create({ name, email, password });
+    // Let MongoDB enforce uniqueness (race-safe). Unique/index errors are handled by the error handler.
+    const user = await User.create({ name, username, email, password });
     const token = generateToken({ id: user._id });
 
-    const userObj = user.toObject();
-    delete userObj.password;
-
-    return res.status(201).json({ success: true, data: { user: userObj, token } });
+    return res.status(201).json({
+      success: true,
+      token,
+      user: { id: user._id, name: user.name, username: user.username, email: user.email }
+    });
   } catch (err) {
-    console.log(err)
     return next(err);
   }
 };

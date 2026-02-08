@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createPost,
   getAllPosts,
+  getAllPostsWithAuthors,
   getPostById,
   deletePost,
   updatePost,
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.post('/posts', authenticate, createPost);
 router.get('/posts', getAllPosts);
+router.get('/posts/with-authors', getAllPostsWithAuthors);
 router.get('/posts/:id', getPostById);
 router.put('/posts/:id', authenticate, updatePost);
 router.delete('/posts/:id', authenticate, authorize('admin'), deletePost);

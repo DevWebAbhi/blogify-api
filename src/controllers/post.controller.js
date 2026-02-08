@@ -1,5 +1,7 @@
 const postsService = require('../services/posts.service');
 const ApiError = require('../utils/ApiError');
+const Post = require('../models/post.model');
+const { encodeCursor, decodeCursor } = require('../utils/cursor');
 
 const createPost = async (req, res, next) => {
   try {
@@ -37,7 +39,80 @@ const updatePost = async (req, res, next) => {
 
 const getAllPosts = async (req, res, next) => {
   try {
-    const posts = await postsService.getAllPosts();
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    const encodedCursor = req.query.cursor;
+
+    // Decode cursor if present
+    let cursor = null;
+    if (encodedCursor) {
+      cursor = decodeCursor(encodedCursor);
+    }
+
+    // Build query: get posts AFTER cursor (newer to older by _id)
+    const query = cursor ? { _id: { $lt: cursor }, isDeleted: { $ne: true } } : { isDeleted: { $ne: true } };
+
+    // Fetch limit + 1 to determine if there are more
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .select('-title -author');
+      console.log(posts)
+
+    const hasMore = posts.length > limit;
+    if (hasMore) posts.pop();
+
+    const nextCursor = hasMore && posts.length > 0
+      ? encodeCursor(posts[posts.length - 1]._id)
+      : null;
+
+    return res.status(200).json({
+      success: true,
+      data: posts,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit,
+        count: posts.length,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+};
+
+const getAllPostsWithAuthors = async (req, res, next) => {
+  try {
+    const pipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: '_id',
+          as: 'authorDetails',
+        },
+      },
+      { $unwind: { path: '$authorDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          content: 1,
+          createdAt: 1,
+          authorId: '$author',
+          authorDetails: {
+            _id: '$authorDetails._id',
+            name: '$authorDetails.name',
+            email: '$authorDetails.email',
+            role: '$authorDetails.role',
+          },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ];
+
+    const posts = await Post.aggregate(pipeline).limit(100);
     return res.status(200).json({ success: true, data: posts });
   } catch (err) {
     console.error(err);
@@ -78,6 +153,7 @@ const deletePost = async (req, res, next) => {
 module.exports = {
   createPost,
   getAllPosts,
+  getAllPostsWithAuthors,
   getPostById,
   updatePost,
   deletePost,

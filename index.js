@@ -13,6 +13,10 @@ app.use(express.json());
 // Routes
 app.use('/api', require('./src/routes/post.routes'));
 app.use('/api/auth', require('./src/routes/auth.routes'));
+app.use('/api/analytics', require('./src/routes/analytics.routes'));
+// Upload routes
+const uploadRoutes = require('./src/routes/upload.routes');
+app.use('/api/upload', uploadRoutes);
 
 // Welcome route
 app.get("/", (req, res) => {
@@ -20,7 +24,7 @@ app.get("/", (req, res) => {
 });
 
 // Error handler (must be mounted after all routes)
-const errorHandler = require('./src/middlewares/error.middleware');
+const errorHandler = require('./src/middlewares/errorHandler');
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
@@ -31,13 +35,9 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-const mongooseOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
 
 mongoose
-  .connect(MONGO_URI, mongooseOptions)
+  .connect(MONGO_URI)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
