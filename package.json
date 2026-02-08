@@ -1,17 +1,21 @@
 {
   "name": "blogify-api",
   "version": "1.0.0",
+  "description": "Blogify API - Production Ready Blog Management System",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
     "create-admin": "node scripts/createAdmin.js"
   },
-  "keywords": [],
+  "keywords": ["blog", "api", "express", "mongodb"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "nodemon": "^3.1.10"
   },
