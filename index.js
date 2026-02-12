@@ -5,6 +5,7 @@ const app = express();
 
 const cors = require('cors');
 const errorHandler = require('./src/middlewares/errorHandler');
+const cookieParser = require('cookie-parser');
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use(cors(corsOptions));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Request logging for production
 if (NODE_ENV === 'production') {

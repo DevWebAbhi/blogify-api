@@ -24,6 +24,20 @@ const updatePost = async (req, res, next) => {
     const { id } = req.params;
     const updates = { ...req.body };
 
+    // Fetch the post first to enforce ownership / admin checks
+    const existing = await postsService.getPostById(id);
+    if (!existing) {
+      return next(new ApiError(404, 'Post not found'));
+    }
+
+    // Ownership / admin check
+    const isOwner = existing.author && existing.author._id
+      ? existing.author._id.toString() === (req.user && req.user._id ? req.user._id.toString() : '')
+      : false;
+    if (!(req.user && req.user.role === 'admin') && !isOwner) {
+      return next(new ApiError(403, 'You do not have permission to modify this post'));
+    }
+
     const updated = await postsService.updatePost(id, updates);
 
     if (!updated) {
@@ -137,6 +151,18 @@ const getPostById = async (req, res, next) => {
 const deletePost = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const existing = await postsService.getPostById(id);
+    if (!existing) {
+      return next(new ApiError(404, 'Post not found or already deleted'));
+    }
+
+    const isOwner = existing.author && existing.author._id
+      ? existing.author._id.toString() === (req.user && req.user._id ? req.user._id.toString() : '')
+      : false;
+    if (!(req.user && req.user.role === 'admin') && !isOwner) {
+      return next(new ApiError(403, 'You do not have permission to delete this post'));
+    }
+
     const updated = await postsService.deletePost(id);
 
     if (!updated) {
