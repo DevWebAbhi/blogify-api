@@ -2,18 +2,31 @@ const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 const User = require('../models/User');
 
-const authenticate = async (req, res, next) => {
+const verifyToken = (token) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Protect middleware: reads token from HttpOnly cookie `jwt` (falls back to Authorization header)
+const protect = async (req, res, next) => {
+  try {
+    let token;
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
       return next(new ApiError(401, 'You are not logged in'));
     }
 
-    const token = authHeader.split(' ')[1];
-
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = verifyToken(token);
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
         return next(new ApiError(401, 'Your token has expired'));
@@ -27,10 +40,10 @@ const authenticate = async (req, res, next) => {
     }
 
     req.user = user;
-    next();
+    return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
-module.exports = { authenticate };
+module.exports = { protect, authenticate: protect };
