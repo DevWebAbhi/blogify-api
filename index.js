@@ -5,6 +5,7 @@ const app = express();
 
 const cors = require('cors');
 const errorHandler = require('./src/middlewares/errorHandler');
+const cookieParser = require('cookie-parser');
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,7 @@ app.use(cors({ origin: '*', credentials: true }));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Welcome route
 app.get("/", (req, res) => {
