@@ -1,7 +1,7 @@
 {
   "name": "blogify-api",
   "version": "1.0.0",
-  "description": "Blogify API - Blog Management System",
+  "description": "Blogify API - Production Ready Blog Management System",
   "main": "index.js",
   "engines": {
     "node": ">=18.0.0",
